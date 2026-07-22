@@ -27,7 +27,7 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
       </div>
       {showText ? (
         <span className={cn("font-bold tracking-tight", s.text)}>
-          ChatSphere <span className="brand-text-gradient">AI</span>
+          NexTalk <span className="brand-text-gradient">AI</span>
         </span>
       ) : null}
     </div>

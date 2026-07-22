@@ -46,7 +46,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               Conversations, supercharged with AI.
             </h1>
             <p className="max-w-md text-white/80">
-              ChatSphere AI blends premium real-time messaging with AI copilots,
+              NexTalk AI blends premium real-time messaging with AI copilots,
               all on a secure Firebase backend.
             </p>
           </div>
@@ -65,7 +65,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </ul>
         </div>
         <p className="relative text-sm text-white/60">
-          © {new Date().getFullYear()} ChatSphere AI. All rights reserved.
+          © {new Date().getFullYear()} NexTalk AI. All rights reserved.
         </p>
       </div>
 

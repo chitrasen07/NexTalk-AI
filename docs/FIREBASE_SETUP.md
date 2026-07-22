@@ -1,6 +1,6 @@
 # Firebase Setup
 
-This guide walks through configuring every Firebase service ChatSphere AI uses.
+This guide walks through configuring every Firebase service NexTalk AI uses.
 
 ## 1. Create a Firebase project
 

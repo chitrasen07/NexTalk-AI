@@ -142,7 +142,7 @@ export function RegisterForm() {
       <div className="mb-6 space-y-2">
         <h2 className="text-2xl font-bold tracking-tight">Create your account</h2>
         <p className="text-muted-foreground">
-          Join ChatSphere AI and start chatting smarter.
+          Join NexTalk AI and start chatting smarter.
         </p>
       </div>
 

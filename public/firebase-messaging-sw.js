@@ -1,5 +1,5 @@
 /* global importScripts, firebase, self */
-// ChatSphere AI — Firebase Cloud Messaging service worker.
+// NexTalk AI — Firebase Cloud Messaging service worker.
 // The (public) Firebase web config is passed via query string during
 // registration so no credentials need to be committed to the repository.
 

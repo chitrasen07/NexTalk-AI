@@ -109,14 +109,14 @@ export default function LandingPage() {
             <span className="brand-text-gradient">supercharged with AI</span>
           </h1>
           <p className="max-w-2xl text-lg text-muted-foreground">
-            ChatSphere AI is a premium chat platform with live presence, read
+            NexTalk AI is a premium chat platform with live presence, read
             receipts, media sharing and built-in AI copilots — all on a secure,
             scalable Firebase backend.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" variant="brand">
               <Link href={primaryHref}>
-                {user ? "Open ChatSphere" : "Start chatting free"}
+                {user ? "Open NexTalk" : "Start chatting free"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -170,7 +170,7 @@ export default function LandingPage() {
                 className="bg-white text-primary hover:bg-white/90"
               >
                 <Link href={primaryHref}>
-                  {user ? "Open ChatSphere" : "Get started now"}
+                  {user ? "Open NexTalk" : "Get started now"}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -182,7 +182,7 @@ export default function LandingPage() {
       <footer className="border-t py-8">
         <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
           <Logo size="sm" />
-          <p>© {new Date().getFullYear()} ChatSphere AI. Built with Firebase.</p>
+          <p>© {new Date().getFullYear()} NexTalk AI. Built with Firebase.</p>
         </div>
       </footer>
     </div>

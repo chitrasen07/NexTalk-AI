@@ -1,7 +1,7 @@
 {
-  "name": "chatsphere-ai-functions",
+  "name": "nextalk-ai-functions",
   "version": "1.0.0",
-  "description": "Cloud Functions for ChatSphere AI (AI copilots + push notifications).",
+  "description": "Cloud Functions for NexTalk AI (AI copilots + push notifications).",
   "main": "lib/index.js",
   "engines": {
     "node": "20"

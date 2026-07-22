@@ -6,11 +6,11 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "ChatSphere AI — Intelligent Real-Time Messaging",
+  title: "NexTalk AI — Intelligent Real-Time Messaging",
   description:
-    "ChatSphere AI is a premium real-time messaging app with AI copilots, powered by Firebase.",
-  applicationName: "ChatSphere AI",
-  authors: [{ name: "ChatSphere AI" }],
+    "NexTalk AI is a premium real-time messaging app with AI copilots, powered by Firebase.",
+  applicationName: "NexTalk AI",
+  authors: [{ name: "NexTalk AI" }],
   keywords: ["chat", "messaging", "AI", "firebase", "real-time"],
 };
 

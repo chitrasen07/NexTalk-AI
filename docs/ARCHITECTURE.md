@@ -1,6 +1,6 @@
 # Architecture
 
-ChatSphere AI is a Next.js (App Router) front end talking directly to Firebase
+NexTalk AI is a Next.js (App Router) front end talking directly to Firebase
 services, with Cloud Functions handling privileged/AI work.
 
 ```text

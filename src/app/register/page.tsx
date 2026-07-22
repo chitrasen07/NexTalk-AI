@@ -4,7 +4,7 @@ import { PublicOnlyRoute } from "@/components/auth/public-only-route";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const metadata: Metadata = {
-  title: "Create account — ChatSphere AI",
+  title: "Create account — NexTalk AI",
 };
 
 export default function RegisterPage() {

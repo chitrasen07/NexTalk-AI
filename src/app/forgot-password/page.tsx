@@ -4,7 +4,7 @@ import { PublicOnlyRoute } from "@/components/auth/public-only-route";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export const metadata: Metadata = {
-  title: "Reset password — ChatSphere AI",
+  title: "Reset password — NexTalk AI",
 };
 
 export default function ForgotPasswordPage() {

@@ -24,8 +24,8 @@ service cloud.firestore {
 
     /* ---------------------------------- Users --------------------------------- */
     match /users/{userId} {
-      // Any signed-in user can look up profiles (needed for search + display).
-      allow read: if isSignedIn();
+      // Any signed-in user can look up and list profiles (needed to find people).
+      allow get, list: if isSignedIn();
 
       allow create: if isUser(userId)
         && request.resource.data.uid == userId

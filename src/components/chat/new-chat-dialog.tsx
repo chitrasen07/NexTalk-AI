@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search, Users, X } from "lucide-react";
+import { Loader2, MessageCircle, Search, UserRoundSearch, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/chat/user-avatar";
-import { searchUsersByUsername } from "@/lib/firebase/firestore";
+import { findPeople } from "@/lib/firebase/firestore";
 import {
   createDirectConversation,
   createGroupConversation,
@@ -31,7 +31,7 @@ interface NewChatDialogProps {
 
 export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [term, setTerm] = React.useState("");
   const [results, setResults] = React.useState<UserProfile[]>([]);
   const [searching, setSearching] = React.useState(false);
@@ -39,6 +39,7 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
   const [groupMode, setGroupMode] = React.useState(false);
   const [groupName, setGroupName] = React.useState("");
   const [creating, setCreating] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!open) {
@@ -47,25 +48,45 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
       setSelected([]);
       setGroupMode(false);
       setGroupName("");
+      setLoadError(null);
     }
   }, [open]);
 
+  // Load suggested people when the dialog opens, and search as the user types.
   React.useEffect(() => {
-    if (!term.trim()) {
-      setResults([]);
-      return;
-    }
+    if (!open) return;
     setSearching(true);
+    setLoadError(null);
     const handle = setTimeout(() => {
-      void searchUsersByUsername(term)
+      void findPeople(term, user?.uid ?? null)
         .then((users) => {
-          setResults(users.filter((u) => u.uid !== user?.uid));
+          setResults(users);
+          if (users.length === 0 && !term.trim()) {
+            setLoadError(null);
+          }
         })
-        .catch(() => setResults([]))
+        .catch((error) => {
+          setResults([]);
+          const message = getFriendlyErrorMessage(error);
+          const code =
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            typeof (error as { code: unknown }).code === "string"
+              ? (error as { code: string }).code
+              : "";
+          if (code.includes("permission-denied")) {
+            setLoadError(
+              "Permission denied reading users. Deploy Firestore rules: firebase deploy --only firestore:rules",
+            );
+          } else {
+            setLoadError(message);
+          }
+        })
         .finally(() => setSearching(false));
-    }, 300);
+    }, term.trim() ? 250 : 0);
     return () => clearTimeout(handle);
-  }, [term, user?.uid]);
+  }, [term, user?.uid, open]);
 
   const startDirect = async (other: UserProfile) => {
     if (!user) return;
@@ -108,17 +129,44 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
     }
   };
 
+  const copyUsername = async () => {
+    if (!profile?.username) return;
+    try {
+      await navigator.clipboard.writeText(`@${profile.username}`);
+      toast.success("Username copied — share it with friends");
+    } catch {
+      toast.message(`Your username is @${profile.username}`);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{groupMode ? "New group" : "New chat"}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <UserRoundSearch className="h-5 w-5 text-primary" />
+            {groupMode ? "New group" : "Find people"}
+          </DialogTitle>
           <DialogDescription>
             {groupMode
-              ? "Pick at least two people and name your group."
-              : "Search for someone by their username to start chatting."}
+              ? "Search people, select at least two, then name your group."
+              : "Search by name or username, then tap someone to start chatting."}
           </DialogDescription>
         </DialogHeader>
+
+        {profile?.username ? (
+          <button
+            type="button"
+            onClick={() => void copyUsername()}
+            className="rounded-lg border bg-secondary/50 px-3 py-2 text-left text-sm transition-colors hover:bg-secondary"
+          >
+            <span className="text-muted-foreground">Your username · </span>
+            <span className="font-medium text-primary">@{profile.username}</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Share this so friends can find you. Tap to copy.
+            </span>
+          </button>
+        ) : null}
 
         {groupMode ? (
           <Input
@@ -150,49 +198,81 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search username…"
+            placeholder="Search name or @username…"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            aria-label="Search users"
+            aria-label="Search people"
+            autoFocus
           />
         </div>
 
-        <div className="max-h-64 space-y-1 overflow-y-auto scrollbar-thin">
+        <div className="max-h-72 space-y-1 overflow-y-auto scrollbar-thin">
           {searching ? (
-            <div className="flex justify-center py-6">
+            <div className="flex justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : results.length === 0 && term ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              No users found for &ldquo;{term}&rdquo;.
+          ) : loadError ? (
+            <p className="py-6 text-center text-sm text-destructive">
+              {loadError}
             </p>
+          ) : results.length === 0 ? (
+            <div className="space-y-2 px-2 py-8 text-center">
+              <p className="text-sm font-medium">
+                {term.trim()
+                  ? `No one found for “${term.trim()}”`
+                  : "No other people yet"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {term.trim()
+                  ? "Try another name or username. Ask them for their @username."
+                  : "Create a second account (or invite a friend) to start chatting."}
+              </p>
+            </div>
           ) : (
-            results.map((u) => {
-              const isSelected = selected.some((s) => s.uid === u.uid);
-              return (
-                <button
-                  key={u.uid}
-                  onClick={() =>
-                    groupMode ? toggleSelect(u) : void startDirect(u)
-                  }
-                  disabled={creating}
-                  className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-secondary ${
-                    isSelected ? "bg-secondary" : ""
-                  }`}
-                >
-                  <UserAvatar name={u.name} photoURL={u.photoURL} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{u.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      @{u.username}
-                    </p>
-                  </div>
-                  {groupMode && isSelected ? (
-                    <Badge variant="brand">Selected</Badge>
-                  ) : null}
-                </button>
-              );
-            })
+            <>
+              {!term.trim() ? (
+                <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  People on NexTalk
+                </p>
+              ) : null}
+              {results.map((u) => {
+                const isSelected = selected.some((s) => s.uid === u.uid);
+                return (
+                  <button
+                    key={u.uid}
+                    onClick={() =>
+                      groupMode ? toggleSelect(u) : void startDirect(u)
+                    }
+                    disabled={creating}
+                    className={`flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-secondary ${
+                      isSelected ? "bg-secondary" : ""
+                    }`}
+                  >
+                    <UserAvatar name={u.name} photoURL={u.photoURL} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{u.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        @{u.username}
+                      </p>
+                    </div>
+                    {groupMode ? (
+                      isSelected ? (
+                        <Badge variant="brand">Selected</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Tap to add
+                        </span>
+                      )
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Chat
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </>
           )}
         </div>
 
@@ -209,10 +289,8 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
             <Button
               variant="brand"
               size="sm"
-              onClick={createGroup}
-              disabled={
-                creating || selected.length < 2 || !groupName.trim()
-              }
+              onClick={() => void createGroup()}
+              disabled={creating || selected.length < 2 || !groupName.trim()}
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Create group

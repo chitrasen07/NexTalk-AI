@@ -4,7 +4,7 @@ import { PublicOnlyRoute } from "@/components/auth/public-only-route";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in — ChatSphere AI",
+  title: "Sign in — NexTalk AI",
 };
 
 export default function LoginPage() {

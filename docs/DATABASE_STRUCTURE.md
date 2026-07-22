@@ -1,6 +1,6 @@
 # Database Structure
 
-ChatSphere AI uses **Cloud Firestore** for persistent data and **Realtime
+NexTalk AI uses **Cloud Firestore** for persistent data and **Realtime
 Database** for ephemeral real-time state.
 
 ## Cloud Firestore

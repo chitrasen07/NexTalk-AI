@@ -9,7 +9,7 @@ import {
   MessageSquarePlus,
   Search,
   Settings,
-  Sparkles,
+  UserRoundSearch,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
@@ -53,8 +53,6 @@ export function ChatSidebar() {
     return conversations.filter((c) => {
       if (filter === "groups" && c.type !== "group") return false;
       if (filter === "chats" && c.type !== "direct") return false;
-      // "archived" tab handled by member doc inside item; approximate here by
-      // showing all in archived tab (items can hide themselves if needed).
       if (!search.trim()) return true;
       const display = getConversationDisplay(c, user?.uid ?? "", profiles);
       return display.title.toLowerCase().includes(search.toLowerCase());
@@ -73,30 +71,36 @@ export function ChatSidebar() {
     <aside className="flex h-full w-full flex-col border-r bg-card/40">
       <div className="flex items-center justify-between px-4 py-3">
         <Logo size="sm" />
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
-          <Button
-            variant="brand"
-            size="icon-sm"
-            onClick={() => setNewChatOpen(true)}
-            aria-label="New chat"
-          >
-            <MessageSquarePlus className="h-4 w-4" />
-          </Button>
-        </div>
+        <ThemeToggle />
       </div>
 
-      <div className="px-4 pb-2">
+      <div className="space-y-2 px-4 pb-3">
+        <Button
+          variant="brand"
+          className="w-full justify-start"
+          onClick={() => setNewChatOpen(true)}
+        >
+          <UserRoundSearch className="h-4 w-4" />
+          Find people to chat
+        </Button>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search conversations…"
+            placeholder="Search your chats…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search conversations"
           />
         </div>
+        {profile?.username ? (
+          <p className="text-center text-xs text-muted-foreground">
+            Your username:{" "}
+            <span className="font-medium text-foreground">
+              @{profile.username}
+            </span>
+          </p>
+        ) : null}
       </div>
 
       <div className="px-4 pb-2">
@@ -121,21 +125,25 @@ export function ChatSidebar() {
             </div>
           ))
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
-              <Sparkles className="h-6 w-6 text-muted-foreground" />
+          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <UserRoundSearch className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-sm font-medium">No conversations yet</p>
-            <p className="text-xs text-muted-foreground">
-              Start a new chat to begin messaging.
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No chats yet</p>
+              <p className="text-xs text-muted-foreground">
+                Find someone by name or @username, then tap{" "}
+                <span className="font-medium text-foreground">Chat</span> to
+                message them.
+              </p>
+            </div>
             <Button
-              variant="outline"
+              variant="brand"
               size="sm"
               onClick={() => setNewChatOpen(true)}
             >
               <MessageSquarePlus className="h-4 w-4" />
-              New chat
+              Find people
             </Button>
           </div>
         ) : (

@@ -1,7 +1,7 @@
-# ChatSphere AI
+# NexTalk AI
 
 A premium, real-time messaging application with built-in AI copilots, powered
-entirely by **Firebase**. ChatSphere AI delivers instant messaging, live
+entirely by **Firebase**. NexTalk AI delivers instant messaging, live
 presence, typing indicators, read receipts, rich media sharing and AI features
 (smart replies, rewriting, summaries, translation and a conversation assistant)
 on a secure, scalable serverless backend.
