@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isConversationMember(conversationId) {
+      return isSignedIn() &&
+        request.auth.uid in
+          firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.memberIds;
+    }
+
+    // Reasonable per-file size ceilings (mirrors client-side validation).
+    function withinSize(maxMB) {
+      return request.resource.size < maxMB * 1024 * 1024;
+    }
+
+    // Profile media: only the owner can write; anyone signed-in can view.
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+        && request.auth.uid == userId
+        && withinSize(5)
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Conversation attachments: only members can read/write.
+    match /conversations/{conversationId}/images/{fileName} {
+      allow read: if isConversationMember(conversationId);
+      allow write: if isConversationMember(conversationId)
+        && withinSize(10)
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /conversations/{conversationId}/videos/{fileName} {
+      allow read: if isConversationMember(conversationId);
+      allow write: if isConversationMember(conversationId)
+        && withinSize(100)
+        && request.resource.contentType.matches('video/.*');
+    }
+
+    match /conversations/{conversationId}/audio/{fileName} {
+      allow read: if isConversationMember(conversationId);
+      allow write: if isConversationMember(conversationId)
+        && withinSize(25)
+        && request.resource.contentType.matches('audio/.*');
+    }
+
+    match /conversations/{conversationId}/files/{fileName} {
+      allow read: if isConversationMember(conversationId);
+      allow write: if isConversationMember(conversationId) && withinSize(25);
+    }
+
+    // Group avatars.
+    match /conversations/{conversationId}/avatar/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isConversationMember(conversationId)
+        && withinSize(5)
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,128 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* --------------------------------- Helpers -------------------------------- */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Reads the conversation doc to check membership (exists at read/update time).
+    function conversationMembers(conversationId) {
+      return get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberIds;
+    }
+
+    function isConversationMember(conversationId) {
+      return isSignedIn() &&
+        request.auth.uid in conversationMembers(conversationId);
+    }
+
+    /* ---------------------------------- Users --------------------------------- */
+    match /users/{userId} {
+      // Any signed-in user can look up profiles (needed for search + display).
+      allow read: if isSignedIn();
+
+      allow create: if isUser(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.username is string
+        && request.resource.data.email is string;
+
+      allow update: if isUser(userId)
+        && request.resource.data.uid == userId;
+
+      allow delete: if false;
+
+      // Private FCM tokens: only the owner can read/write.
+      match /fcmTokens/{tokenId} {
+        allow read, write: if isUser(userId);
+      }
+    }
+
+    /* ------------------------------ Conversations ----------------------------- */
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.memberIds;
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.auth.uid in request.resource.data.memberIds
+        && request.resource.data.type in ['direct', 'group'];
+
+      // Only existing members can update (e.g. lastMessage preview). This also
+      // prevents outsiders from adding themselves to memberIds.
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.memberIds;
+
+      allow delete: if false;
+
+      /* ------------------------------- Members -------------------------------- */
+      match /members/{memberId} {
+        // Members can read the membership roster of their conversations.
+        allow read: if isConversationMember(conversationId);
+
+        // Membership docs carry no access-granting power (access is gated by the
+        // conversation's memberIds), so we only require the doc id to match its
+        // userId field. This supports atomic batch creation of conversations.
+        allow create: if isSignedIn()
+          && request.resource.data.userId == memberId;
+
+        // Users may only modify their OWN membership (read state, mute, pin…).
+        allow update: if isUser(memberId);
+        allow delete: if isUser(memberId);
+      }
+
+      /* ------------------------------- Messages ------------------------------- */
+      match /messages/{messageId} {
+        allow read: if isConversationMember(conversationId);
+
+        allow create: if isConversationMember(conversationId)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.type in ['text', 'image', 'video', 'file', 'audio'];
+
+        // Only the author can edit or soft-delete their message.
+        allow update: if isSignedIn()
+          && resource.data.senderId == request.auth.uid;
+
+        allow delete: if false;
+
+        /* ------------------------------ Receipts ------------------------------ */
+        match /receipts/{userId} {
+          allow read: if isConversationMember(conversationId);
+          // Users can only write their own receipt.
+          allow create, update: if isUser(userId)
+            && request.resource.data.userId == userId;
+          allow delete: if false;
+        }
+
+        /* ------------------------------ Reactions ----------------------------- */
+        match /reactions/{userId} {
+          allow read: if isConversationMember(conversationId);
+          allow create, update: if isUser(userId)
+            && request.resource.data.userId == userId;
+          allow delete: if isUser(userId);
+        }
+      }
+    }
+
+    /* ------------------------------ Notifications ----------------------------- */
+    match /notifications/{notificationId} {
+      // Only the recipient can read; the owner may mark as read.
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Created server-side by Cloud Functions (admin bypasses rules).
+      allow create, delete: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
